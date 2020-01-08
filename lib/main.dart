@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:audioplayers/audio_cache.dart';
 
-
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -36,7 +35,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   FirebaseMessaging _firebaseMessaging = new FirebaseMessaging();
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
@@ -47,33 +45,27 @@ class _MyHomePageState extends State<MyHomePage> {
   void initPlayer() {
     advancedPlayer = new AudioPlayer();
     audioCache = new AudioCache(fixedPlayer: advancedPlayer);
-
   }
-
-
 
   @override
   void initState() {
     initPlayer();
-    _firebaseMessaging.configure(
-      onMessage: (Map<String, dynamic> notification) {
-        showNotification('$notification','fdfd');
-        audioCache.play('alert.mp3');
-        print('on message $notification');
-      },
-      onResume: (Map<String, dynamic> message) {
+    _firebaseMessaging.configure(onMessage: (Map<String, dynamic> message) {
+      final title = message['notification']['title'];
+      final body = message['notification']['body'];
+      showNotification('$title', '$body');
+      audioCache.play('alert.mp3');
+      print('on message $title');
 
-        print('on resume $message');
-      },
-      onLaunch: (Map<String, dynamic> message) {
+    }, onResume: (Map<String, dynamic> message) {
+      print('on resume $message');
 
-        print('on launch $message');
-      }
-
-    );
+    }, onLaunch: (Map<String, dynamic> message) {
+      print('on launch $message');
+    });
     _firebaseMessaging.requestNotificationPermissions(
         const IosNotificationSettings(sound: true, badge: true, alert: true));
-    _firebaseMessaging.getToken().then((token){
+    _firebaseMessaging.getToken().then((token) {
       print(token);
     });
 
@@ -83,49 +75,51 @@ class _MyHomePageState extends State<MyHomePage> {
     var initSetttings = new InitializationSettings(android, iOS);
     flutterLocalNotificationsPlugin.initialize(initSetttings,
         onSelectNotification: onSelectNotification);
-
-
   }
 
   Future onSelectNotification(String payload) {
     debugPrint("payload : $payload");
     showDialog(
       context: context,
-      builder: (_) => new AlertDialog(
-        title: new Text('Notification'),
-        content: new Text('$payload'),
+      builder: (_) => new Dialog(
+          elevation: 10.0,
+          backgroundColor: Colors.transparent,
+          child: Card(
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              child: Column(
+                mainAxisSize:MainAxisSize.min,
+                children: <Widget>[
+                  Text("Cook is Arrived At Home",style: TextStyle(fontWeight: ),)
+                ],
+              ),
+            ),
+          )
       ),
     );
   }
-  
-
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(),
-      body: Container(
-        child: Center(child: Text("dsddsdsds"),), 
-      )
-    );
+        appBar: AppBar(),
+        body: Container(
+          color: Colors.blueAccent,
+          child: Center(
+            child: RaisedButton(onPressed: (){
+              onSelectNotification('hello');
+            }),
+          ),
+        ));
   }
 
-
-
-  showNotification(String title,String message) async {
+  showNotification(String title, String message) async {
     var android = new AndroidNotificationDetails(
         'channel id', 'channel NAME', 'CHANNEL DESCRIPTION',
-        priority: Priority.High,importance: Importance.Max,
-        playSound: false
-    );
+        priority: Priority.High, importance: Importance.Max, playSound: false);
     var iOS = new IOSNotificationDetails();
     var platform = new NotificationDetails(android, iOS);
     await flutterLocalNotificationsPlugin.show(
         0, '$title', '$message', platform);
   }
-
 }
-
-
-
